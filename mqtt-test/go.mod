@@ -1,4 +1,4 @@
-module mqtt-client
+module mqtt-test
 
 go 1.22.1
 

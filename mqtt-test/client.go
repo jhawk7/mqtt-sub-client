@@ -24,7 +24,7 @@ var msgHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) 
 	fmt.Printf("messaged received [id: %d] [topic: %v], [payload: %s]", msg.MessageID(), msg.Topic(), msg.Payload())
 }
 
-func main() {
+func test() {
 	//set client options
 	broker := os.Getenv("MQTT_SERVER")
 	port := os.Getenv("MQTT_PORT")
