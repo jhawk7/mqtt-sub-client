@@ -106,7 +106,7 @@ func triageMsg(msg mqtt.Message) {
 	}
 
 	//send to prom
-	promExp.Export(pmsg.data)
+	promExp.Export(msg.Topic(), pmsg.data)
 
 	if pmsg.action == NOTIFY_ACTION {
 		//notify
