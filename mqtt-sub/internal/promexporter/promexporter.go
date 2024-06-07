@@ -7,6 +7,8 @@ import (
 	"mqtt-sub/internal/handlers"
 	"strings"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/push"
 	"go.opentelemetry.io/otel/metric"
 )
 
@@ -45,6 +47,10 @@ func (exp *exporter) Export(name string, data interface{}) {
 
 	//export rawdata to prom
 	expdata := string(rawdata)
+	opts := prometheus.GaugeOpts{
+		Name: meterName,
+	}
+	prometheus.NewGauge(opts).Set(val)
 
 }
 

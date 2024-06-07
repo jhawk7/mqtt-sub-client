@@ -13,9 +13,11 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-var promExp promexporter.IExporter
-var notifier notify.INotifier
-var topics []string
+var (
+	promExp  promexporter.IExporter
+	notifier notify.INotifier
+	topics   []string
+)
 
 const (
 	LOG_ACTION    = "log"
