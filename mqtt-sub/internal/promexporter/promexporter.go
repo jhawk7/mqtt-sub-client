@@ -11,7 +11,7 @@ import (
 )
 
 type IExporter interface {
-	Export(string, []byte)
+	Export(string, interface{})
 }
 
 type exporter struct {
@@ -26,17 +26,25 @@ func InitExporter(meterProvider *metric.MeterProvider) IExporter {
 	}
 }
 
-func (exp *exporter) Export(name string, data []byte) {
+func (exp *exporter) Export(name string, data interface{}) {
 	//export to prom
-	parsedData := make(map[string]interface{})
-	if uErr := json.Unmarshal(data, &parsedData); uErr != nil {
-		err := fmt.Errorf("failed to unmarshal export data; %v", uErr)
+	// parsedData := make(map[string]interface{})
+	// if uErr := json.Unmarshal(data, &parsedData); uErr != nil {
+	// 	err := fmt.Errorf("failed to unmarshal export data; %v", uErr)
+	// 	handlers.LogError(err, false)
+	// 	return
+	// }
+	rawdata, mErr := json.Marshal(data)
+	if mErr != nil {
+		err := fmt.Errorf("failed to marshal export data into json; %v", mErr)
 		handlers.LogError(err, false)
-		return
 	}
 
 	meterName := strings.ReplaceAll(name, "/", ".")
-	handlers.LogInfo(fmt.Sprintf("exporting metrics for %v", meterName))
+	handlers.LogInfo(fmt.Sprintf("exporting prom data for %v", meterName))
+
+	//export rawdata to prom
+	expdata := string(rawdata)
 
 }
 

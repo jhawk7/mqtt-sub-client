@@ -32,8 +32,9 @@ type client struct {
 }
 
 type parsedMessage struct {
-	data   []byte `json:"data"`
-	action string `json:"action"`
+	data     interface{} `json:"data"`
+	action   string      `json:"action"`
+	alertMsg string      `json:"alert-msg,omitempty"`
 }
 
 var connHandler mqtt.OnConnectHandler = func(mclient mqtt.Client) {
@@ -62,7 +63,7 @@ func InitClient(p promexporter.IExporter, n notify.INotifier) IClient {
 	topics = strings.Split(os.Getenv("MQTT_TOPICS"), ":")
 
 	opts := mqtt.NewClientOptions().AddBroker(fmt.Sprintf("tcp://%v:%v", broker, port))
-	opts.SetClientID("test_client")
+	opts.SetClientID("mqtt-sub-client")
 	opts.SetUsername(user)
 	opts.SetPassword(pass)
 	opts.SetKeepAlive(time.Second * 10)
@@ -71,7 +72,7 @@ func InitClient(p promexporter.IExporter, n notify.INotifier) IClient {
 	mclient := mqtt.NewClient(opts)
 	if token := mclient.Connect(); token.Wait() && token.Error() != nil {
 		err := fmt.Errorf("mqtt connection failed; %v", token.Error())
-		fmt.Println(err)
+		handlers.LogError(err, true)
 	}
 
 	c := &client{mqttClient: mclient}
