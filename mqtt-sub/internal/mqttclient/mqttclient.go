@@ -1,12 +1,11 @@
 package mqttclient
 
 import (
-	"encoding/json"
 	"fmt"
-	"mqtt-sub/internal/handlers"
+	"mqtt-sub/internal/common"
+	"mqtt-sub/internal/dataparser"
 	"mqtt-sub/internal/notify"
 	"mqtt-sub/internal/promexporter"
-	"os"
 	"strings"
 	"time"
 
@@ -17,52 +16,48 @@ var (
 	promExp  promexporter.IExporter
 	notifier notify.INotifier
 	topics   []string
+	mChan    chan mqtt.Message
 )
 
 const (
 	LOG_ACTION    = "log"
-	NOTIFY_ACTION = "notify"
+	NOTIFY_ACTION = "alert"
 )
 
 type IClient interface {
 	sub()
 	Disconnect()
+	Listen()
 }
 
 type client struct {
 	mqttClient mqtt.Client
 }
 
-type parsedMessage struct {
-	data     interface{} `json:"data"`
-	action   string      `json:"action"`
-	alertMsg string      `json:"alert-msg,omitempty"`
-}
-
 var connHandler mqtt.OnConnectHandler = func(mclient mqtt.Client) {
-	handlers.LogInfo("successfully connected to mqtt server")
+	common.LogInfo("successfully connected to mqtt server")
 }
 
 var lostHandler mqtt.ConnectionLostHandler = func(mclient mqtt.Client, err error) {
 	connErr := fmt.Errorf("lost connection to mqtt server; %v", err)
-	handlers.LogError(connErr, false)
+	common.LogError(connErr, false)
 
 }
 
 var msgHandler mqtt.MessageHandler = func(mclient mqtt.Client, msg mqtt.Message) {
 	info := fmt.Sprintf("messaged received [id: %d] [topic: %v], [payload: %s]", msg.MessageID(), msg.Topic(), msg.Payload())
-	handlers.LogInfo(info)
+	common.LogInfo(info)
 
-	triageMsg(msg)
+	mChan <- msg
 }
 
-func InitClient(p promexporter.IExporter, n notify.INotifier) IClient {
+func InitClient(p promexporter.IExporter, n notify.INotifier, config *common.Config) IClient {
 	//set client options
-	broker := os.Getenv("MQTT_SERVER")
-	port := os.Getenv("MQTT_PORT")
-	user := os.Getenv("MQTT_USER")
-	pass := os.Getenv("MQTT_PASS")
-	topics = strings.Split(os.Getenv("MQTT_TOPICS"), ":")
+	broker := config.MQTTServer
+	port := config.MQTTPort
+	user := config.MQTTUser
+	pass := config.MQTTPass
+	topics = config.MQTTTopics
 
 	opts := mqtt.NewClientOptions().AddBroker(fmt.Sprintf("tcp://%v:%v", broker, port))
 	opts.SetClientID("mqtt-sub-client")
@@ -74,9 +69,10 @@ func InitClient(p promexporter.IExporter, n notify.INotifier) IClient {
 	mclient := mqtt.NewClient(opts)
 	if token := mclient.Connect(); token.Wait() && token.Error() != nil {
 		err := fmt.Errorf("mqtt connection failed; %v", token.Error())
-		handlers.LogError(err, true)
+		common.LogError(err, true)
 	}
 
+	mChan = make(chan mqtt.Message)
 	c := &client{mqttClient: mclient}
 	promExp = p
 	notifier = n
@@ -93,26 +89,49 @@ func (c *client) sub() {
 
 	token := c.mqttClient.SubscribeMultiple(filters, msgHandler)
 	token.Wait()
-	handlers.LogInfo(fmt.Sprintf("subscribed to topics %v", topics))
+	common.LogInfo(fmt.Sprintf("subscribed to topics %v", topics))
 }
 
 func (c *client) Disconnect() {
 	c.mqttClient.Disconnect(5000)
 }
 
-func triageMsg(msg mqtt.Message) {
-	var pmsg parsedMessage
-	if mErr := json.Unmarshal(msg.Payload(), &pmsg); mErr != nil {
-		err := fmt.Errorf("failed to parse incoming mqtt message; %v", mErr)
-		handlers.LogError(err, false)
+func (c *client) Listen() {
+	for msg := range mChan {
+		parser, pErr := parseMsg(msg)
+		if pErr != nil {
+			common.LogError(pErr, false)
+			continue
+		}
+
+		//send to prom
+		promExp.ExportMetrics(parser.GetMeterName(), parser.GetDataMap())
+		action, alertmsg := parser.GetActionInfo()
+
+		if action == NOTIFY_ACTION {
+			if nErr := notifier.Notify(alertmsg); nErr != nil {
+				common.LogError(nErr, false)
+			}
+		}
+	}
+}
+
+func parseMsg(msg mqtt.Message) (parser dataparser.IDataParser, err error) {
+	meter := strings.ReplaceAll(msg.Topic(), "/", ".")
+	switch meter {
+	case "picow.house.plant-moisture":
+		parser = dataparser.InitMoistureParser(meter)
+	case "picow.tempF":
+		parser = dataparser.InitTempParser(meter)
+	default:
+		err = fmt.Errorf("unknown mqtt topic")
 		return
 	}
 
-	//send to prom
-	promExp.Export(msg.Topic(), pmsg.data)
-
-	if pmsg.action == NOTIFY_ACTION {
-		//notify
-		//notifier.Notify(pmsg.data)
+	if pErr := parser.ParseData(msg.Payload()); pErr != nil {
+		err = pErr
+		return
 	}
+
+	return
 }
