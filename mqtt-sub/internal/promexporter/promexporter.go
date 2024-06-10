@@ -1,78 +1,45 @@
 package promexporter
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
-	"mqtt-sub/internal/handlers"
-	"strings"
+	"mqtt-sub/internal/common"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
-	"go.opentelemetry.io/otel/metric"
 )
 
 type IExporter interface {
-	Export(string, interface{})
+	ExportMetrics(string, map[string]float64)
 }
 
 type exporter struct {
-	MeterName string
-	MeterCh   chan int
-	mp        metric.MeterProvider
+	url string
 }
 
-func InitExporter(meterProvider *metric.MeterProvider) IExporter {
-	return &exporter{
-		mp: *meterProvider,
-	}
+func InitExporter(pushUrl string) IExporter {
+	return &exporter{url: pushUrl}
 }
 
-func (exp *exporter) Export(name string, data interface{}) {
-	//export to prom
-	// parsedData := make(map[string]interface{})
-	// if uErr := json.Unmarshal(data, &parsedData); uErr != nil {
-	// 	err := fmt.Errorf("failed to unmarshal export data; %v", uErr)
-	// 	handlers.LogError(err, false)
-	// 	return
-	// }
-	rawdata, mErr := json.Marshal(data)
-	if mErr != nil {
-		err := fmt.Errorf("failed to marshal export data into json; %v", mErr)
-		handlers.LogError(err, false)
+func (exp *exporter) ExportMetrics(metername string, datamap map[string]float64) {
+	common.LogInfo(fmt.Sprintf("exporting prom data for %v", metername))
+	var collectors []prometheus.Collector
+	registry := prometheus.NewRegistry()
+
+	for metric, datapoint := range datamap {
+		opts := prometheus.GaugeOpts{Name: metric}
+		guage := prometheus.NewGauge(opts)
+		guage.Set(datapoint)
+		collectors = append(collectors, guage)
 	}
 
-	meterName := strings.ReplaceAll(name, "/", ".")
-	handlers.LogInfo(fmt.Sprintf("exporting prom data for %v", meterName))
+	registry.MustRegister(collectors...)
 
-	//export rawdata to prom
-	expdata := string(rawdata)
-	opts := prometheus.GaugeOpts{
-		Name: meterName,
+	if pushErr := push.New(exp.url, metername).
+		Gatherer(registry).
+		Grouping("topic", metername).
+		Push(); pushErr != nil {
+		err := fmt.Errorf("failed to push data to prometheus; %v", pushErr)
+		common.LogError(err, false)
+		return
 	}
-	prometheus.NewGauge(opts).Set(val)
-
 }
-
-// func (exp *exporter) Export2(name string, data []byte) {
-// 	//export to prom
-// 	parsedData := make(map[string]interface{})
-// 	if uErr := json.Unmarshal(data, &parsedData); uErr != nil {
-// 		err := fmt.Errorf("failed to unmarshal export data; %v", uErr)
-// 		handlers.LogError(err, false)
-// 		return
-// 	}
-
-// 	meterName := strings.ReplaceAll(name, "/", ".")
-// 	handlers.LogInfo(fmt.Sprintf("exporting metrics for %v", meterName))
-
-// 	callback := func(ctx context.Context, result metric.Float64ObserverResult) {
-
-// 	}
-
-// 	meter := exp.mp.Meter(meterName)
-// 	if _, gaugeErr := meter.NewFloat64GaugeObserver(meterName+".reading", callback); gaugeErr != nil {
-// 		err := fmt.Errorf("guage observer error: %v", gaugeErr)
-// 		handlers.LogError(err, false)
-// 	}
-// }
