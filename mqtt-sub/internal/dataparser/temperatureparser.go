@@ -13,8 +13,9 @@ type TempParser struct {
 }
 
 type tempData struct {
-	tempF    float64 `json:"tempF"`
-	humidity float64 `json:"humidity"`
+	TempF    float64 `json:"tempF"`
+	Humidity float64 `json:"humidity"`
+	Action   string  `json:"action"`
 }
 
 func InitTempParser(name string) *TempParser {
@@ -31,8 +32,8 @@ func (parser *TempParser) ParseData(data []byte) error {
 	}
 
 	if len(parser.datamap) == 0 {
-		parser.datamap["temp_farenheight"] = parser.data.tempF
-		parser.datamap["relative_humidity"] = parser.data.humidity
+		parser.datamap["temp_farenheight"] = parser.data.TempF
+		parser.datamap["relative_humidity"] = parser.data.Humidity
 	}
 	return nil
 }
@@ -46,7 +47,7 @@ func (parser *TempParser) GetMeterName() string {
 }
 
 func (parser *TempParser) GetActionInfo() (action string, alertMsg string) {
-	action = ""
+	action = parser.data.Action
 	alertMsg = ""
 	return
 }

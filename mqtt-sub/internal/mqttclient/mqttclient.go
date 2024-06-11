@@ -41,7 +41,6 @@ var connHandler mqtt.OnConnectHandler = func(mclient mqtt.Client) {
 var lostHandler mqtt.ConnectionLostHandler = func(mclient mqtt.Client, err error) {
 	connErr := fmt.Errorf("lost connection to mqtt server; %v", err)
 	common.LogError(connErr, false)
-
 }
 
 var msgHandler mqtt.MessageHandler = func(mclient mqtt.Client, msg mqtt.Message) {
@@ -76,14 +75,13 @@ func InitClient(p promexporter.IExporter, n notify.INotifier, config *common.Con
 	c := &client{mqttClient: mclient}
 	promExp = p
 	notifier = n
-
-	c.sub()
 	return c
 }
 
 func (c *client) sub() {
 	filters := make(map[string]byte)
 	for _, topic := range topics {
+		common.LogInfo(fmt.Sprintf("subscribing to topic %v", topic))
 		filters[topic] = '1' //qos - atleast once
 	}
 
@@ -93,11 +91,14 @@ func (c *client) sub() {
 }
 
 func (c *client) Disconnect() {
+	common.LogInfo("disconnecting from mqtt server..")
 	c.mqttClient.Disconnect(5000)
 }
 
 func (c *client) Listen() {
+	c.sub()
 	for msg := range mChan {
+		common.LogInfo(fmt.Sprintf("parsing and exporting message from topic %v", msg.Topic()))
 		parser, pErr := parseMsg(msg)
 		if pErr != nil {
 			common.LogError(pErr, false)

@@ -13,12 +13,12 @@ type MoistureParser struct {
 }
 
 type moistureData struct {
-	moistureReading float64 `json:"plant-moisture"`
-	rawReading      float64 `json:"raw-reading"`
-	status          string  `json:"plant-status"`
-	threshold       float64 `json:"plant-threshold"`
-	action          string  `json:"action"`
-	alsertMsg       string  `json:"alert-msg"`
+	MoistureReading float64 `json:"plant-moisture"`
+	RawReading      float64 `json:"raw-reading"`
+	Status          string  `json:"plant-status"`
+	Threshold       float64 `json:"plant-threshold"`
+	Action          string  `json:"action"`
+	AlsertMsg       string  `json:"alert-msg,omitempty"`
 }
 
 func InitMoistureParser(name string) IDataParser {
@@ -35,8 +35,8 @@ func (parser *MoistureParser) ParseData(data []byte) error {
 	}
 
 	if len(parser.datamap) == 0 {
-		parser.datamap["moisture_percentage"] = parser.data.moistureReading
-		parser.datamap["plant_threshold"] = parser.data.threshold
+		parser.datamap["moisture_percentage"] = parser.data.MoistureReading
+		parser.datamap["plant_threshold"] = parser.data.Threshold
 	}
 	return nil
 }
@@ -50,7 +50,7 @@ func (parser *MoistureParser) GetMeterName() string {
 }
 
 func (parser *MoistureParser) GetActionInfo() (action string, alertMsg string) {
-	action = parser.data.action
-	alertMsg = parser.data.alsertMsg
+	action = parser.data.Action
+	alertMsg = parser.data.AlsertMsg
 	return
 }
