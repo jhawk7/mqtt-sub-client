@@ -71,7 +71,7 @@ func InitClient(p promexporter.IExporter, n notify.INotifier, config *common.Con
 		common.LogError(err, true)
 	}
 
-	mChan = make(chan mqtt.Message, 10)
+	mChan = make(chan mqtt.Message, 1)
 	c := &client{mqttClient: mclient}
 	promExp = p
 	notifier = n
@@ -81,12 +81,14 @@ func InitClient(p promexporter.IExporter, n notify.INotifier, config *common.Con
 func (c *client) sub() {
 	filters := make(map[string]byte)
 	for _, topic := range topics {
-		common.LogInfo(fmt.Sprintf("subscribing to topic %v", topic))
-		filters[topic] = '1' //qos - atleast once
+		common.LogInfo(fmt.Sprintf("subscribing to topic [%v]", topic))
+		filters[topic] = 1 //qos - 1 is "atleast once"
 	}
 
-	token := c.mqttClient.SubscribeMultiple(filters, msgHandler)
-	token.Wait()
+	if token := c.mqttClient.SubscribeMultiple(filters, msgHandler); token.Wait() && token.Error() != nil {
+		err := fmt.Errorf("failed to subscribe to topics %v; error %v", topics, token.Error())
+		common.LogError(err, true)
+	}
 	common.LogInfo(fmt.Sprintf("subscribed to topics %v", topics))
 }
 

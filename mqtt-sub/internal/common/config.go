@@ -16,6 +16,7 @@ type Config struct {
 	ClientFrom string
 	SMTPPass   string
 	SMTPServer string
+	SMTPPort   string
 	ClientsTo  []string
 }
 
@@ -66,6 +67,11 @@ func InitConfig() *Config {
 		LogError(fmt.Errorf("SMTP_SERVER not set"), true)
 	}
 
+	smtpPort, found := os.LookupEnv("SMTP_PORT")
+	if !found {
+		LogError(fmt.Errorf("SMTP_PORT not set"), true)
+	}
+
 	clientsTo, found := os.LookupEnv("SMTP_CLIENTS")
 	if !found {
 		LogError(fmt.Errorf("SMTP_CLIENT not set"), true)
@@ -82,5 +88,6 @@ func InitConfig() *Config {
 		ClientsTo:  strings.Split(clientsTo, ":"),
 		SMTPPass:   epass,
 		SMTPServer: smtpServer,
+		SMTPPort:   smtpPort,
 	}
 }
