@@ -14,6 +14,7 @@ func main() {
 	promExp := promexporter.InitExporter(c.PushUrl)
 	notifier := notify.InitNotifier(c)
 	cMqtt := mqttclient.InitClient(promExp, notifier, c)
+	go cMqtt.Listen()
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch)
 	<-ch //blocks until signal from ch is received
