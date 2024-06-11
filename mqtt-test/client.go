@@ -24,7 +24,7 @@ var msgHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) 
 	fmt.Printf("messaged received [id: %d] [topic: %v], [payload: %s]", msg.MessageID(), msg.Topic(), msg.Payload())
 }
 
-func test() {
+func main() {
 	//set client options
 	broker := os.Getenv("MQTT_SERVER")
 	port := os.Getenv("MQTT_PORT")
@@ -37,7 +37,7 @@ func test() {
 	client := mqtt.NewClient(opts)
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
 		err := fmt.Errorf("mqtt connection failed; %v", token.Error())
-		fmt.Println(err)
+		panic(err)
 	}
 
 	publish(&client)
@@ -50,7 +50,7 @@ func publish(client *mqtt.Client) {
 	num := 10
 	for i := 0; i < num; i++ {
 		text := fmt.Sprintf("Message %d", i)
-		token := (*client).Publish("topic/test", 1, true, text)
+		token := (*client).Publish("test/demo", 1, true, text)
 		token.Wait()
 		time.Sleep(time.Second * 2)
 	}

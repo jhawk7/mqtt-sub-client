@@ -13,4 +13,4 @@ func (c *mockClient) Disconnect() {
 	fmt.Println("diconnected mock mqtt client")
 }
 
-func ()
+//func ()

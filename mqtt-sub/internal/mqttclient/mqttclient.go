@@ -71,7 +71,7 @@ func InitClient(p promexporter.IExporter, n notify.INotifier, config *common.Con
 		common.LogError(err, true)
 	}
 
-	mChan = make(chan mqtt.Message)
+	mChan = make(chan mqtt.Message, 10)
 	c := &client{mqttClient: mclient}
 	promExp = p
 	notifier = n

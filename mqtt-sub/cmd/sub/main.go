@@ -7,6 +7,7 @@ import (
 	"mqtt-sub/internal/promexporter"
 	"os"
 	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -16,7 +17,7 @@ func main() {
 	cMqtt := mqttclient.InitClient(promExp, notifier, c)
 	go cMqtt.Listen()
 	ch := make(chan os.Signal, 1)
-	signal.Notify(ch)
+	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 	<-ch //blocks until signal from ch is received
 	cMqtt.Disconnect()
 }
