@@ -1,0 +1,7 @@
+version: '3'
+services:
+  mqtt-sub-client:
+    image: jhawk7/mqtt-sub-client:latest
+    build: .
+    env_file:
+      - ../.env
