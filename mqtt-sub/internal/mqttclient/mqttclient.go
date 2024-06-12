@@ -6,7 +6,6 @@ import (
 	"mqtt-sub/internal/dataparser"
 	"mqtt-sub/internal/notify"
 	"mqtt-sub/internal/promexporter"
-	"strings"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -120,14 +119,9 @@ func (c *client) Listen() {
 }
 
 func parseMsg(msg mqtt.Message) (parser dataparser.IDataParser, err error) {
-	meter := strings.ReplaceAll(msg.Topic(), "/", ".")
-	switch meter {
-	case "picow.house.plant-moisture":
-		parser = dataparser.InitMoistureParser(meter)
-	case "picow.tempF":
-		parser = dataparser.InitTempParser(meter)
-	default:
-		err = fmt.Errorf("unknown mqtt topic")
+	parser, dpErr := dataparser.InitDataParser(msg.Topic())
+	if dpErr != nil {
+		err = dpErr
 		return
 	}
 
