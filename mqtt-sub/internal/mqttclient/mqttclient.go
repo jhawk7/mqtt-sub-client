@@ -62,6 +62,7 @@ func InitClient(p promexporter.IExporter, n notify.INotifier, config *common.Con
 	opts.SetUsername(user)
 	opts.SetPassword(pass)
 	opts.SetKeepAlive(time.Second * 10)
+	opts.SetCleanSession(false) //disabling clean session on client reconnect so that messages will resume on reconnect
 	opts.OnConnect = connHandler
 	opts.OnConnectionLost = lostHandler
 	mclient := mqtt.NewClient(opts)
