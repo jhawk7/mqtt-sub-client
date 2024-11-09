@@ -82,7 +82,7 @@ func (c *client) sub() {
 	filters := make(map[string]byte)
 	for _, topic := range topics {
 		common.LogInfo(fmt.Sprintf("subscribing to topic [%v]", topic))
-		filters[topic] = 1 //qos - 1 is "atleast once"
+		filters[topic] = 2 //qos: 0 - no standard, 1 - "atleast once", 2 - exactly once
 	}
 
 	if token := c.mqttClient.SubscribeMultiple(filters, msgHandler); token.Wait() && token.Error() != nil {
