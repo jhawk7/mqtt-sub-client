@@ -3,13 +3,15 @@ package dataparser
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 type MoistureParser struct {
-	rawData   []byte
-	datamap   map[string]float64 //metric to value
-	data      moistureData
-	metername string
+	rawData    []byte
+	datamap    map[string]float64 //metric to value
+	data       moistureData
+	metername  string
+	notifyRate time.Duration
 }
 
 type moistureData struct {
@@ -23,8 +25,9 @@ type moistureData struct {
 
 func InitMoistureParser(name string) IDataParser {
 	return &MoistureParser{
-		datamap:   make(map[string]float64),
-		metername: name,
+		datamap:    make(map[string]float64),
+		metername:  name,
+		notifyRate: time.Hour * 24, // notify once every 24hrs
 	}
 }
 
@@ -53,4 +56,8 @@ func (parser *MoistureParser) GetActionInfo() (action string, alertMsg string) {
 	action = parser.data.Action
 	alertMsg = parser.data.AlsertMsg
 	return
+}
+
+func (parser *MoistureParser) NotificationRate() time.Duration {
+	return parser.notifyRate
 }

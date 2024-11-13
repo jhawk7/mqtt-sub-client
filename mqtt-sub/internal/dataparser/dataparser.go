@@ -3,6 +3,7 @@ package dataparser
 import (
 	"fmt"
 	"strings"
+	"time"
 )
 
 // All DataParsers implement IDataParser Interface
@@ -11,6 +12,7 @@ type IDataParser interface {
 	GetDataMap() map[string]float64
 	GetMeterName() string
 	GetActionInfo() (action string, alertMsg string)
+	NotificationRate() time.Duration // rate to send 1 notification
 }
 
 func InitDataParser(topic string) (parser IDataParser, err error) {

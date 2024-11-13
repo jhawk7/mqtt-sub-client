@@ -112,7 +112,7 @@ func (c *client) Listen() {
 		action, alertmsg := parser.GetActionInfo()
 
 		if action == NOTIFY_ACTION {
-			if nErr := notifier.Notify(alertmsg); nErr != nil {
+			if nErr := notifier.Notify(parser, alertmsg); nErr != nil {
 				common.LogError(nErr, false)
 			}
 		}

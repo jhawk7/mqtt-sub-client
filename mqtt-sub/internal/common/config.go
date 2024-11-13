@@ -18,6 +18,8 @@ type Config struct {
 	SMTPServer string
 	SMTPPort   string
 	ClientsTo  []string
+	RedisHost  string
+	RedisPass  string
 }
 
 func InitConfig() *Config {
@@ -77,6 +79,16 @@ func InitConfig() *Config {
 		LogError(fmt.Errorf("SMTP_CLIENT not set"), true)
 	}
 
+	redisHost, found := os.LookupEnv("REDIS_HOST")
+	if !found {
+		LogError(fmt.Errorf("REDIS_HOST not set"), true)
+	}
+
+	redisPass, found := os.LookupEnv("REDIS_PASS")
+	if !found {
+		LogError(fmt.Errorf("REDIS_PASS not set"), true)
+	}
+
 	return &Config{
 		MQTTServer: server,
 		MQTTPort:   port,
@@ -89,5 +101,7 @@ func InitConfig() *Config {
 		SMTPPass:   epass,
 		SMTPServer: smtpServer,
 		SMTPPort:   smtpPort,
+		RedisHost:  redisHost,
+		RedisPass:  redisPass,
 	}
 }

@@ -3,13 +3,15 @@ package dataparser
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 type TempParser struct {
-	rawData   []byte
-	datamap   map[string]float64 //metric to value
-	data      tempData
-	metername string
+	rawData    []byte
+	datamap    map[string]float64 //metric to value
+	data       tempData
+	metername  string
+	notifyRate time.Duration
 }
 
 type tempData struct {
@@ -20,8 +22,9 @@ type tempData struct {
 
 func InitTempParser(name string) IDataParser {
 	return &TempParser{
-		datamap:   make(map[string]float64),
-		metername: name,
+		datamap:    make(map[string]float64),
+		metername:  name,
+		notifyRate: time.Hour * 0, //we wont notify
 	}
 }
 
@@ -50,4 +53,8 @@ func (parser *TempParser) GetActionInfo() (action string, alertMsg string) {
 	action = parser.data.Action
 	alertMsg = ""
 	return
+}
+
+func (parser *TempParser) NotificationRate() time.Duration {
+	return parser.notifyRate
 }
