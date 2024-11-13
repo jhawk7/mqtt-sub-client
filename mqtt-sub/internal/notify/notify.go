@@ -29,6 +29,9 @@ func InitNotifier(c *common.Config) INotifier {
 	}
 }
 
+//use redis to store topic as id and # of tokens/ message that can be sent in a given time period (also store)
+// topicid, tokens, last ts, refresh rate
+
 func (n *Notifier) Notify(alertmsg string) error {
 	auth := smtp.PlainAuth("", n.email, n.pass, n.server)
 

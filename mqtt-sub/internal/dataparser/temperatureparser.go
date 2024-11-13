@@ -18,7 +18,7 @@ type tempData struct {
 	Action   string  `json:"action"`
 }
 
-func InitTempParser(name string) *TempParser {
+func InitTempParser(name string) IDataParser {
 	return &TempParser{
 		datamap:   make(map[string]float64),
 		metername: name,
