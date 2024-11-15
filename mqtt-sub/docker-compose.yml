@@ -12,11 +12,11 @@ services:
       - ./redis-data:/data
       #- ./redis.conf:/usr/local/etc/redis/redis.conf
     env_file:
-      - redis.env
+      - ./redis.env
       #restart: always
 
   mqtt-sub-client:
     image: jhawk7/mqtt-sub-client:latest
     build: .
     env_file:
-      - ../.env
+      - ./env

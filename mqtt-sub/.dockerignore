@@ -1,0 +1,5 @@
+.env.sh
+.env
+*.env
+redis.env
+redis-data/

@@ -1,3 +1,4 @@
 .env.sh
 .env
 *.env
+mqtt-sub/redis-data/

@@ -90,5 +90,5 @@ func (n *Notifier) checkRateLimit(parser dataparser.IDataParser) bool {
 		return true
 	}
 
-	return res.Allowed > 0
+	return res.Allowed >= 1
 }
