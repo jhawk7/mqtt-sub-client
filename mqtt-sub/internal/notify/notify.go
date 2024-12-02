@@ -66,6 +66,11 @@ func (n *Notifier) Notify(parser dataparser.IDataParser, alertmsg string) error 
 		return nil
 	}
 
+	if len(alertmsg) == 0 {
+		common.LogInfo("notifier message is empty; dropping")
+		return nil
+	}
+
 	auth := smtp.PlainAuth("", n.email, n.pass, n.server)
 
 	host := fmt.Sprintf("%v:%v", n.server, n.port)
