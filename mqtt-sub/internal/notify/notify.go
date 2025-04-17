@@ -8,7 +8,6 @@ import (
 	"net/smtp"
 	"strings"
 
-	"github.com/go-redis/redis_rate/v10"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -17,27 +16,24 @@ type INotifier interface {
 }
 
 type Notifier struct {
-	email   string
-	pass    string
-	server  string
-	port    string
-	to      []string
-	rdb     *redis.Client
-	limiter *redis_rate.Limiter
+	email  string
+	pass   string
+	server string
+	port   string
+	to     []string
+	rdb    *redis.Client
 }
 
 func InitNotifier(c *common.Config) INotifier {
 	rdb := initRDB(c)
-	limiter := redis_rate.NewLimiter(rdb)
 
 	return &Notifier{
-		email:   c.ClientFrom,
-		pass:    c.SMTPPass,
-		server:  c.SMTPServer,
-		port:    c.SMTPPort,
-		to:      c.ClientsTo,
-		rdb:     rdb,
-		limiter: limiter,
+		email:  c.ClientFrom,
+		pass:   c.SMTPPass,
+		server: c.SMTPServer,
+		port:   c.SMTPPort,
+		to:     c.ClientsTo,
+		rdb:    rdb,
 	}
 }
 
@@ -82,18 +78,30 @@ func (n *Notifier) Notify(parser dataparser.IDataParser, alertmsg string) error 
 }
 
 func (n *Notifier) checkRateLimit(parser dataparser.IDataParser) bool {
-	limit := redis_rate.Limit{
-		Rate:   1,
-		Burst:  1,
-		Period: parser.NotificationRate(),
+	key := parser.GetMeterName()
+	ttl, tErr := n.rdb.TTL(context.Background(), key).Result()
+	if tErr != nil {
+		common.LogError(fmt.Errorf("failed to get ttl for key %v; %v", key, tErr), false)
+		return false
 	}
 
-	res, limitErr := n.limiter.Allow(context.Background(), parser.GetMeterName(), limit)
-	if limitErr != nil {
-		err := fmt.Errorf("failed to retrieve notify limit for event %v; %v", parser.GetMeterName(), limitErr)
-		common.LogError(err, false)
+	// key is expired or doesn't exist per TTL documentation
+	if ttl == -2 {
+		//create and inc
+		if _, incErr := n.rdb.Incr(context.Background(), key).Result(); incErr != nil {
+			common.LogError(fmt.Errorf("failed to increment value for parser key %v; %v", key, incErr), false)
+			return false
+		}
+
+		//set expiration
+		if _, expErr := n.rdb.Expire(context.Background(), key, parser.NotificationRate()).Result(); expErr != nil {
+			common.LogError(fmt.Errorf("failed to set expiration for key %v; %v", key, expErr), false)
+			return false
+		}
+
 		return true
 	}
 
-	return res.Allowed >= 1
+	common.LogInfo(fmt.Sprintf("key %v has not yet expired and is therefore rate limited", key))
+	return false
 }

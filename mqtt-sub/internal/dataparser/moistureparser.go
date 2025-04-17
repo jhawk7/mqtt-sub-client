@@ -27,7 +27,7 @@ func InitMoistureParser(name string) IDataParser {
 	return &MoistureParser{
 		datamap:    make(map[string]float64),
 		metername:  name,
-		notifyRate: time.Hour * 24, // notify once every 24hrs
+		notifyRate: time.Hour * 23, // notify once every 23hrs
 	}
 }
 
