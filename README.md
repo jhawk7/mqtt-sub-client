@@ -1,4 +1,4 @@
-# MQTT-SUB-CLIENT
+# MQTT SUB Client [Go](https://img.shields.io/badge/go-%2300ADD8.svg?style=for-the-badge&logo=go&logoColor=white) ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=Prometheus&logoColor=white)
 This repo consist of two sub directories mqtt-sub and mqtt-test
 
 ## MQTT-SUB
