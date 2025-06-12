@@ -1,8 +1,8 @@
-# MQTT SUB Client ![Go](https://img.shields.io/badge/go-%2300ADD8.svg?style=for-the-badge&logo=go&logoColor=white) ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=Prometheus&logoColor=white)
+# MQTT SUB Client ![Go](https://img.shields.io/badge/go-%2300ADD8.svg?style=for-the-badge&logo=go&logoColor=white) ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=Prometheus&logoColor=white) ![Grafana](https://img.shields.io/badge/grafana-%23F46800.svg?style=for-the-badge&logo=grafana&logoColor=white)
 This repo consist of two sub directories mqtt-sub and mqtt-test
 
 ## MQTT-SUB
-MQTT-SUB subscribes to MQTT Topics and exports messages as metrics to a Prometheus server via Pushgateway.
+MQTT-SUB subscribes to MQTT Topics and exports messages as metrics to a `Prometheus` server via `Pushgateway`. This data is then visualized in `Grafana`.
 - Topics can be added to the MQTT_TOPICS env var using ':' as a delimeter. 
 - A `dataparser` interface is used to define how the service should parse the metrics of a topic's message. The dataparser implementation should store the metrics as k,v pairs in a ,map that the is passed to the `promexporter` to be pushed to prometheus via `pushgateway`. A dataparser implementation exists for each topic.
 - The service uses the `notify` package to send alerts via SMTP to all SMTP clients (specified in the **SMTP_CLIENTS** env var).
