@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// can we use yaml config file to define parsers and their topics?
 // All DataParsers implement IDataParser Interface
 type IDataParser interface {
 	ParseData([]byte) error
