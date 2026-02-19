@@ -23,6 +23,8 @@ func InitDataParser(topic string) (parser IDataParser, err error) {
 		parser = InitMoistureParser(meter)
 	case "picow.tempF":
 		parser = InitTempParser(meter)
+	case "rpi.crawl.tempF":
+		parser = InitTempParser(meter)
 	default:
 		err = fmt.Errorf("unknown mqtt topic")
 		return
