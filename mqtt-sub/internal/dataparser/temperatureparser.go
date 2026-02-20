@@ -18,6 +18,7 @@ type tempData struct {
 	TempF    float64 `json:"tempF"`
 	Humidity float64 `json:"humidity"`
 	Action   string  `json:"action"`
+	TempC    float64 `json:"tempC",omitempty`
 }
 
 func InitTempParser(name string) IDataParser {
@@ -37,6 +38,7 @@ func (parser *TempParser) ParseData(data []byte) error {
 	if len(parser.datamap) == 0 {
 		parser.datamap["temp_farenheight"] = parser.data.TempF
 		parser.datamap["relative_humidity"] = parser.data.Humidity
+		parser.datamap["temp_celcius"] = (parser.data.TempF - 32.0) * (5.0 / 9.0)
 	}
 	return nil
 }
